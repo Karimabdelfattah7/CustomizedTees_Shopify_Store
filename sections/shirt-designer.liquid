@@ -97,6 +97,40 @@
   top: 20px;
 }
 
+/* Garment toggle (Tee / Hoodie) */
+.sd-garment-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 12px;
+}
+.sd-garment-btn {
+  background: var(--cream);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-size: 0.78rem;
+  font-family: 'Roboto', sans-serif;
+  color: var(--mid);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.sd-garment-btn svg { display: block; margin: 0 auto 4px; }
+.sd-garment-btn:hover { border-color: var(--gold); color: var(--dark); }
+.sd-garment-btn.active {
+  background: var(--dark);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Hoodie-only placements (hidden by default; shown when garment=hoodie) */
+.sd-hoodie-only { display: none !important; }
+.sd-page.sd-garment-hoodie .sd-hoodie-only,
+body.sd-garment-hoodie .sd-hoodie-only { display: inline-block !important; }
+
 /* Placement selector */
 .sd-placement-grid {
   display: grid;
@@ -941,6 +975,24 @@ body.sd-mobile .sd-preview-wrap {
     ============================================================ -->
     <div class="sd-panel sd-tools" id="sdTools">
 
+      <!-- Garment Type -->
+      <div class="sd-panel-header">Garment</div>
+      <div class="sd-garment-toggle" role="tablist" aria-label="Choose garment type">
+        <button class="sd-garment-btn active" data-garment="tee" role="tab" aria-selected="true" onclick="sdSetGarment('tee')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M3 5 L7 3 Q11 5 15 3 L19 5 L17 9 L15 8 V19 H7 V8 L5 9 Z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+          T-Shirt
+        </button>
+        <button class="sd-garment-btn" data-garment="hoodie" role="tab" aria-selected="false" onclick="sdSetGarment('hoodie')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M5 7 Q11 1 17 7 L19 9 L17 11 L15 10 V19 H7 V10 L5 11 L3 9 Z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M9 14 H13 V18 H9 Z" fill="currentColor" opacity="0.4"/>
+          </svg>
+          Hoodie
+        </button>
+      </div>
+
       <!-- Placement -->
       <div class="sd-panel-header">Print Placement</div>
       <div class="sd-placement-grid">
@@ -986,6 +1038,20 @@ body.sd-mobile .sd-preview-wrap {
             <rect x="14" y="4" width="4" height="6" rx="1" fill="currentColor" opacity="0.7"/>
           </svg>
           R. Sleeve
+        </button>
+        <button class="sd-placement-btn" data-placement="pocket" onclick="sdSetPlacement('pocket')" title="Print on chest pocket (tee) or kangaroo pocket (hoodie)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="2" width="16" height="18" rx="2" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 12 H16 V17 H6 Z M6 12 L4 14 M16 12 L18 14" fill="currentColor" opacity="0.7" stroke="currentColor" stroke-width="0.8" stroke-linejoin="round"/>
+          </svg>
+          Pocket
+        </button>
+        <button class="sd-placement-btn sd-hoodie-only" data-placement="hood" onclick="sdSetPlacement('hood')" title="Print on hoodie hood (hoodie garment only)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M5 8 Q11 1 17 8 L17 12 H5 Z" fill="currentColor" opacity="0.4" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="5" y="12" width="12" height="8" rx="1.5" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          Hood
         </button>
       </div>
 
@@ -1228,6 +1294,12 @@ body.sd-mobile .sd-preview-wrap {
         <div class="sd-canvas-overlay" id="sdCanvasRightSleeve">
           <canvas id="canvasRightSleeve"></canvas>
         </div>
+        <div class="sd-canvas-overlay" id="sdCanvasPocket">
+          <canvas id="canvasPocket"></canvas>
+        </div>
+        <div class="sd-canvas-overlay" id="sdCanvasHood">
+          <canvas id="canvasHood"></canvas>
+        </div>
       </div>
 
       <div class="sd-color-badge">
@@ -1362,6 +1434,16 @@ var PLACEMENT_CONFIG = {
     view: 'front',
     svgX: 320, svgY: 140, svgW: 60, svgH: 100,
     label: 'Right Sleeve'
+  },
+  'pocket': {
+    view: 'front',
+    svgX: 130, svgY: 270, svgW: 90, svgH: 70,
+    label: 'Pocket'
+  },
+  'hood': {
+    view: 'back',
+    svgX: 130, svgY: 30, svgW: 140, svgH: 90,
+    label: 'Hood (Hoodie)'
   }
 };
 
@@ -1384,6 +1466,7 @@ var TEXT_COLORS = [
 // STATE
 // ----------------------------------------------------------------
 var state = {
+  garment: 'tee',
   shirtColor: '#FFFFFF',
   shirtColorName: 'White',
   placement: 'front',
@@ -1583,6 +1666,8 @@ function canvasElId(placement) {
   if (placement === 'right-chest') return 'canvasRightChest';
   if (placement === 'left-sleeve') return 'canvasLeftSleeve';
   if (placement === 'right-sleeve') return 'canvasRightSleeve';
+  if (placement === 'pocket') return 'canvasPocket';
+  if (placement === 'hood') return 'canvasHood';
   return 'canvasFront';
 }
 
@@ -1593,11 +1678,13 @@ function canvasWrapperId(placement) {
   if (placement === 'right-chest') return 'sdCanvasRightChest';
   if (placement === 'left-sleeve') return 'sdCanvasLeftSleeve';
   if (placement === 'right-sleeve') return 'sdCanvasRightSleeve';
+  if (placement === 'pocket') return 'sdCanvasPocket';
+  if (placement === 'hood') return 'sdCanvasHood';
   return 'sdCanvasFront';
 }
 
 function positionCanvasOverlays() {
-  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve'].forEach(function(pl) {
+  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve','pocket','hood'].forEach(function(pl) {
     var dims = getCanvasDims(pl);
     var wrapper = document.getElementById(canvasWrapperId(pl));
     wrapper.style.position = 'absolute';
@@ -1659,6 +1746,24 @@ window.sdSetShirtColor = function(hex, name, btn) {
 };
 
 // ----------------------------------------------------------------
+// GARMENT TYPE (Tee / Hoodie)
+// ----------------------------------------------------------------
+window.sdSetGarment = function(garment) {
+  state.garment = garment;
+  document.querySelectorAll('.sd-garment-btn').forEach(function(b){
+    var isActive = b.dataset.garment === garment;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+  // Toggle body class so .sd-hoodie-only rules apply
+  document.body.classList.toggle('sd-garment-hoodie', garment === 'hoodie');
+  // If switching back to tee while hood placement is active, fall back to front
+  if (garment === 'tee' && state.placement === 'hood') {
+    sdSetPlacement('front');
+  }
+};
+
+// ----------------------------------------------------------------
 // PLACEMENT
 // ----------------------------------------------------------------
 window.sdSetPlacement = function(placement) {
@@ -1676,7 +1781,7 @@ window.sdSetPlacement = function(placement) {
 
 function updateActiveCanvas() {
   var pl = state.placement;
-  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve'].forEach(function(p) {
+  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve','pocket','hood'].forEach(function(p) {
     var wrapper = document.getElementById(canvasWrapperId(p));
     var isActive = (p === pl);
     wrapper.classList.toggle('active', isActive);
@@ -1708,11 +1813,13 @@ window.sdSetView = function(view) {
   // Show/hide canvas overlays based on view
   // Front view shows: front, left-chest, right-chest, left-sleeve, right-sleeve
   // Back view shows: back
-  var frontPlacements = ['front','left-chest','right-chest','left-sleeve','right-sleeve'];
+  var frontPlacements = ['front','left-chest','right-chest','left-sleeve','right-sleeve','pocket'];
   frontPlacements.forEach(function(p) {
     document.getElementById(canvasWrapperId(p)).style.display = view === 'front' ? '' : 'none';
   });
   document.getElementById(canvasWrapperId('back')).style.display = view === 'back' ? '' : 'none';
+  // Hood prints on back view (back of hoodie shows hood detail)
+  document.getElementById(canvasWrapperId('hood')).style.display = view === 'back' ? '' : 'none';
 };
 
 // ----------------------------------------------------------------
@@ -2243,7 +2350,7 @@ window.sdAddToCart = function() {
 
   // Gather text elements
   var textCount = 0;
-  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve'].forEach(function(pl) {
+  ['front','back','left-chest','right-chest','left-sleeve','right-sleeve','pocket','hood'].forEach(function(pl) {
     var fc = fabricCanvases[pl];
     if (!fc) return;
     fc.getObjects().forEach(function(obj) {
@@ -2328,7 +2435,7 @@ window.sdDownloadDesign = function(silent) {
     URL.revokeObjectURL(svgUrl);
 
     // Draw each fabric canvas
-    ['front','back','left-chest','right-chest','left-sleeve','right-sleeve'].forEach(function(pl) {
+    ['front','back','left-chest','right-chest','left-sleeve','right-sleeve','pocket','hood'].forEach(function(pl) {
       var cfg = PLACEMENT_CONFIG[pl];
       var fc = fabricCanvases[pl];
       if (!fc || fc.getObjects().length === 0) return;
