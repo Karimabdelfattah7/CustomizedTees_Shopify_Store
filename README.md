@@ -80,11 +80,11 @@ customized-teez-theme/
 
 ## Notable Technical Details
 
-**Dual I2C bus approach (Liquid templating):** Custom sections use Shopify's section schema to expose settings in the theme customizer, allowing non-technical staff to update content without touching code.
+**Shopify section architecture:** Custom Liquid sections expose configurable content through Shopify's section schema, allowing store content to be updated through the theme editor without modifying code.
 
 **Mobile layout fixes:** The homepage section includes targeted responsive CSS fixes for the Full Catalog list (row wrapping, tag pill z-index, arrow clipping) and the hero block (overflow containment, badge positioning). These were diagnosed and patched directly in the Liquid section file.
 
-**Offline-first product management:** All product variant data, compare-at prices, and collection assignments were managed programmatically via the Shopify MCP API rather than manually through the admin UI, enabling bulk updates across all 11 products in a single session.
+**Programmatic catalog management:** All product variant data, compare-at prices, and collection assignments were managed programmatically via the Shopify MCP API rather than manually through the admin UI, enabling bulk updates across all 11 products in a single session.
 
 ---
 
@@ -102,7 +102,7 @@ Theme updates are deployed via zip upload in Shopify Admin:
 ## Author
 
 **Karim Abdelfattah**
-Dual-Degree Student, Computer and Communication Engineering
-University of Louisville (J.B. Speed School) + Alexandria University
+B.E. Computer & Communication Engineering, Alexandria University  
+B.S. Computer Science & Engineering candidate, University of Louisville
 
-[LinkedIn](https://www.linkedin.com/in/karimabdelfattah7) | [GitHub](https://github.com/Karimsherif-7)
+[LinkedIn](https://www.linkedin.com/in/karimabdelfattah7) | [GitHub](https://github.com/Karimabdelfattah7)
